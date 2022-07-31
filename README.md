@@ -7,3 +7,6 @@
 * [**morph.sh**](scripts/morph.sh) perform simple file conversions
 * [**sound-tricks.sh**](scripts/sound-tricks.sh) has various sound server control related functions
 * [**whoami.sh**](scripts/whoami.sh) prints IP information
+
+### Shared Dependencies
+* [ripgrep](https://github.com/BurntSushi/ripgrep) (rg)
