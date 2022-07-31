@@ -3,10 +3,11 @@
 usage () {
 	printf '
 Usage:
-    sound-tricks.sh SUBCOMMAND\n
-SUBCOMMAND:
-    cycle            cycle through output sinks
-    window [volume]  change focused window volume
+    sound-tricks.sh [OPTION]
+
+OPTIONS:
+    -c, --cycle            cycle through output sinks
+    -w, --window [volume]  change focused window volume
 '
 
 	exit
@@ -15,7 +16,7 @@ SUBCOMMAND:
 # Cycle active output sinks
 cycle () {
 	# shellcheck disable=SC2016
-	sinks=$(pactl list sinks | rg --trim -r '$1' 'Name: (.*?)' | rg -v "(easyeffects|pulseeffects)")
+	sinks=$(pactl list sinks | rg --trim -r '$1' 'Name: (.*?)' | rg -vi "(easyeffects|pulseeffects|controller)")
 	current=$(pactl get-default-sink)
 
 	if [ -z "$sinks" ]; then
@@ -57,10 +58,10 @@ window () {
 }
 
 case "$1" in
-	'cycle')
+	-c | --cycle)
 		cycle
 		;;
-	'window')
+	-w | --window)
 		if [ -z "$2" ]; then
 			usage
 		fi
