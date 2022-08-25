@@ -9,12 +9,15 @@ Usage:
 
 SUBCOMMAND:
 	toggle     pause/resume
+	prev
+	next
 	pause      pause everything
 '
 
 	exit
 }
 
+current='none'
 playback_status='unknown'
 
 function dbus_players() {
@@ -41,15 +44,64 @@ function pause_all() {
 }
 
 function play() {
-	#MPD
+	# MPD
 	mpc play
+}
+
+function next() {
+	update_status
+
+	case "$current" in
+		'mpd') echo 1
+		;;
+		'') echo 2 or 3
+		;;
+		'') echo default
+		;;
+	esac
+}
+
+function prev() {
+	update_status
+
+	case "$current" in
+		'mpd')
+			mpc next
+		;;
+		'org.mpris.MediaPlayer2'*)
+			dbus-send                   \
+				--type=method_call      \
+				--dest="$player"        \
+				/org/mpris/MediaPlayer2 \
+				org.mpris.MediaPlayer2.Player.Previous
+		;;
+	esac
+}
+
+function next() {
+	update_status
+
+	case "$current" in
+		'mpd')
+			mpc next
+		;;
+		'org.mpris.MediaPlayer2'*)
+			dbus-send                   \
+				--type=method_call      \
+				--dest="$player"        \
+				/org/mpris/MediaPlayer2 \
+				org.mpris.MediaPlayer2.Player.Next
+		;;
+	esac
 }
 
 function update_status() {
 	#MPD
 	if [[ $(mpc | sed -n '2{p;q}') == *'[playing]'* ]]; then
-			playback_status='playing'
-			return
+		current='mpd'
+		playback_status='playing'
+
+		return
 	fi
 
 	# DBus
@@ -64,7 +116,9 @@ function update_status() {
 					| sed -n '2p')
 
 		if [[ "$response" == *'Playing'* ]]; then
+			current=$player
 			playback_status='playing'
+
 			return
 		fi
 
@@ -87,13 +141,9 @@ function toggle() {
 }
 
 case "$1" in
-	'toggle')
-		toggle
-		;;
-	'pause')
-		pause_all
-		;;
-	*)
-		usage
-		;;
+	'toggle') toggle    ;;
+	'prev')   prev      ;;
+	'next')   next      ;;
+	'pause')  pause_all ;;
+	*)        usage     ;;
 esac
