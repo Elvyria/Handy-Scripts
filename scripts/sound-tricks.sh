@@ -8,6 +8,7 @@ Usage:
 OPTIONS:
     -c, --cycle            cycle through output sinks
     -w, --window [volume]  change focused window volume
+    -m, --mute             change microphone state
 '
 
 	exit
@@ -15,7 +16,6 @@ OPTIONS:
 
 # Cycle active output sinks
 cycle () {
-	# shellcheck disable=SC2016
 	sinks=$(pactl list sinks | rg --trim -r '$1' 'Name: (.*?)' | rg -vi "(easyeffects|pulseeffects|controller)")
 	current=$(pactl get-default-sink)
 
@@ -47,14 +47,25 @@ window () {
 		exit
 	fi
 
-	# shellcheck disable=SC2016
 	id=$(echo "$inputs" | head -n"$line_nums" | tac | rg -m 1 -r '$1' 'Sink Input #(\d+)')
 
-	# TODO: Sanity Checks
-	# volume=$(pactl get-sink-input-volume "$id")
-	# if [ "$volume" -eq 0 ]
-
 	pactl 'set-sink-input-volume' "$id" "$volume"
+}
+
+# Toggle microphone state
+mute() {
+	current=$(pactl get-default-source)
+
+	pactl set-source-mute "$current" toggle
+
+	temp='/tmp/sound-tricks.mute.id'
+
+	[ -f "$temp" ] && id="-r $(cat "$temp")"
+
+	case "$(pactl get-source-mute "$current")" in
+		'Mute: yes') notify-send -p $id -t 2000 'Changed Microphone State' ' Muted'        > "$temp" ;;
+		'Mute: no')  notify-send -p $id -t 2000 'Changed Microphone State' ' Listening...' > "$temp" ;;
+	esac
 }
 
 case "$1" in
@@ -67,6 +78,9 @@ case "$1" in
 		fi
 
 		window "$2"
+		;;
+	-m | --mute)
+		mute
 		;;
 	*)
 		usage
