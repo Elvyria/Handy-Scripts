@@ -19,17 +19,17 @@ cycle () {
 	sinks=$(pactl list sinks | rg --trim -r '$1' 'Name: (.*?)' | rg -vi "(easyeffects|pulseeffects|controller)")
 	current=$(pactl get-default-sink)
 
-	if [ -z "$sinks" ]; then
-		exit 1
-	fi
+	[ -z "$sinks" ] && exit 1
 
 	next=$(echo "$sinks" | rg -A1 "$current" | tail -n +2)
 
-	if [ -z "$next" ]; then
-		next=$(echo "$sinks" | head -n 1)
-	fi
+	[ -z "$next" ] && next=$(echo "$sinks" | head -n 1)
 
-	pactl set-default-sink "$next" && notify-send -t 1100 "Switched Audio Device" "$next"
+	temp='/tmp/sound-tricks.cycle.id'
+
+	[ -f "$temp" ] && id=$(cat "$temp")
+
+	pactl set-default-sink "$next" && notify-send -p ${id:+ -r "$id"} -t 1100 "Switched Audio Device" "$next" > "$temp"
 }
 
 # Change focused window volume
@@ -54,17 +54,15 @@ window () {
 
 # Toggle microphone state
 mute() {
-	current=$(pactl get-default-source)
-
-	pactl set-source-mute "$current" toggle
+	pactl set-source-mute '@DEFAULT_SOURCE@' toggle
 
 	temp='/tmp/sound-tricks.mute.id'
 
-	[ -f "$temp" ] && id="-r $(cat "$temp")"
+	[ -f "$temp" ] && id=$(cat "$temp")
 
-	case "$(pactl get-source-mute "$current")" in
-		'Mute: yes') notify-send -p $id -t 2000 'Changed Microphone State' ' Muted'        > "$temp" ;;
-		'Mute: no')  notify-send -p $id -t 2000 'Changed Microphone State' ' Listening...' > "$temp" ;;
+	case "$(pactl get-source-mute '@DEFAULT_SOURCE@')" in
+		'Mute: yes') notify-send -p ${id:+ -r "$id"} -t 2000 'Changed Microphone State' ' Muted'        > "$temp" ;;
+		'Mute: no')  notify-send -p ${id:+ -r "$id"} -t 2000 'Changed Microphone State' ' Listening...' > "$temp" ;;
 	esac
 }
 
@@ -73,9 +71,7 @@ case "$1" in
 		cycle
 		;;
 	-w | --window)
-		if [ -z "$2" ]; then
-			usage
-		fi
+		[ -z "$2" ] && usage
 
 		window "$2"
 		;;
