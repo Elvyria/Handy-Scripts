@@ -3,6 +3,7 @@
 
 ## Scripts
 * [**backup.sh**](scripts/backup.sh) packs files in archive, preserving all file attributes
+* [**conn.zsh**](scripts/conn.zsh) wrapper for [ss](https://linux.die.net/man/8/ss) to lookup active TCP/UDP ports and connections
 * [**morph.sh**](scripts/morph.sh) perform simple file conversions
 * [**playback.zsh**](scripts/playback.zsh) advanced media control
 * [**sound-tricks.sh**](scripts/sound-tricks.sh) has various sound server control related functions
