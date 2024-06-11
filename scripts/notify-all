@@ -1,0 +1,14 @@
+#!/bin/execlineb -S0
+
+forbacktickx -E -p USER {
+	pipeline { users }
+	tr " " "\n"
+}
+
+backtick -E UID {
+	id -u ${USER}
+}
+
+sudo -u ${USER}
+env DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/${UID}/bus"
+notify-send ${@}
